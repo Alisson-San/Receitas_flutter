@@ -24,30 +24,28 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE recipes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        ingredients TEXT NOT NULL,
-        instructions TEXT NOT NULL,
-        preparationTime INTEGER NOT NULL
+        name TEXT NOT NULL,
+        creationDate TEXT NOT NULL
       )
     ''');
   }
 
   // CRUD Operations
-  Future<int> createRecipe(Recipe recipe) async {
+  Future<int> createRecipe(Receita recipe) async {
     final db = await instance.database;
-    return await db.insert('recipes', recipe.toMap());
+    return await db.insert('receitas', recipe.toMap());
   }
 
-  Future<List<Recipe>> readAllRecipes() async {
+  Future<List<Receita>> readAllRecipes() async {
     final db = await instance.database;
-    final result = await db.query('recipes');
+    final result = await db.query('receitas');
     return result.map((json) => Recipe.fromMap(json)).toList();
   }
 
-  Future<int> updateRecipe(Recipe recipe) async {
+  Future<int> updateRecipe(Receita recipe) async {
     final db = await instance.database;
     return await db.update(
-      'recipes',
+      'receitas',
       recipe.toMap(),
       where: 'id = ?',
       whereArgs: [recipe.id],
@@ -57,7 +55,7 @@ class DatabaseHelper {
   Future<int> deleteRecipe(int id) async {
     final db = await instance.database;
     return await db.delete(
-      'recipes',
+      'receitas',
       where: 'id = ?',
       whereArgs: [id],
     );
