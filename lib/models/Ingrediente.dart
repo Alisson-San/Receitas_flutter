@@ -1,15 +1,18 @@
+import 'package:uuid/uuid.dart';
+
+
 class Ingrediente {
-  final int id;
-  final int receitaId;
-  final String nome;
+  final String? id;
+  final int? receitaId;
+  final String? nome;
   final int? quantidade;
 
   Ingrediente({
-    required this.id,
+    String ? id,
     required this.receitaId,
     required this.nome,
     this.quantidade,
-  });
+  }) : id = id ?? const Uuid().v4();
 
   Map<String, dynamic> toMap() {
     return {

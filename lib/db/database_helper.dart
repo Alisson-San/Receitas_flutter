@@ -1,9 +1,11 @@
 import 'package:sqflite/sqflite.dart';
+import 'package:path/path.dart';
 import '../models/receita.dart';
 
 class DatabaseHelper {
-  static final DatabaseHelper instance = DatabaseHelper._init();
-  static Database? _database;
+  static final String _nomeBancoDeDados = "receitas.db";
+  static final int _versaoBancoDeDados = 1;
+  static late Database _bancoDeDados;
 
   DatabaseHelper._init();
 
@@ -13,46 +15,64 @@ class DatabaseHelper {
     return _database!;
   }
 
-  Future<Database> _initDB(String filePath) async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, filePath);
-
-    return await openDatabase(path, version: 1, onCreate: _createDB);
-  }
-
-  Future _createDB(Database db, int version) async {
-    await db.execute('''
-      CREATE TABLE recipes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        creationDate TEXT NOT NULL
-      )
-    ''');
-  }
-
-  // CRUD Operations
-  Future<int> createRecipe(Receita recipe) async {
-    final db = await instance.database;
-    return await db.insert('receitas', recipe.toMap());
-  }
-
-  Future<List<Receita>> readAllRecipes() async {
-    final db = await instance.database;
-    final result = await db.query('receitas');
-    return result.map((json) => Recipe.fromMap(json)).toList();
-  }
-
-  Future<int> updateRecipe(Receita recipe) async {
-    final db = await instance.database;
-    return await db.update(
-      'receitas',
-      recipe.toMap(),
-      where: 'id = ?',
-      whereArgs: [recipe.id],
+  inicializar() async {
+    String caminhoBanco = join(await getDatabasesPath(), _nomeBancoDeDados);
+    _bancoDeDados = await openDatabase(
+      caminhoBanco,
+      version: _versaoBancoDeDados,
+      onCreate: criarBD
     );
   }
 
-  Future<int> deleteRecipe(int id) async {
+  Future criarBD(Database db, int version) async {
+  await db.execute('''
+      CREATE TABLE receitas (
+        id TEXT PRIMARY KEY,
+        nome TEXT NOT NULL,
+        dataCriacao TEXT NOT NULL
+      )
+    ''');
+
+  await db.execute('''
+    CREATE TABLE ingredientes (
+      id TEXT PRIMARY KEY NOT NULL,
+      receitaId TEXT NOT NULL,
+      nome TEXT NOT NULL,
+      quantidade TEXT NOT NULL,
+      FOREIGN KEY (receitaId) REFERENCES receitas (id) ON DELETE CASCADE
+    )
+  ''');
+
+  await db.execute('''
+    CREATE TABLE instrucoes (
+      id TEXT PRIMARY KEY NOT NULL,
+      receitaId TEXT NOT NULL,
+      ordem INTEGER NOT NULL,
+      descricao TEXT NOT NULL,
+      FOREIGN KEY (receitaId) REFERENCES receitas (id) ON DELETE CASCADE
+    )
+  ''');
+  }
+
+  Future<int> inserir(String tabela, Map<String, Object?> valores) async {
+    await inicializar();
+    return await _bancoDeDados.insert(tabela, valores);
+  }
+
+  Future<List<Map<String, Object?>>> obterTodos(String tabela,
+      {String? condicao, List<Object>? conidcaoArgs}) async {
+    await inicializar();
+    return await _bancoDeDados.query(tabela,
+        where: condicao, whereArgs: conidcaoArgs);
+  }
+
+
+  Future<int> atualizar(Receita receita) async {
+      await inicializar();
+    return await _bancoDeDados.update(tabela, valores);
+  }
+
+  Future<int> deletar(String tabela, int id) async {
     final db = await instance.database;
     return await db.delete(
       'receitas',
@@ -60,6 +80,8 @@ class DatabaseHelper {
       whereArgs: [id],
     );
   }
+
+  Future<
 
   Future close() async {
     final db = await instance.database;

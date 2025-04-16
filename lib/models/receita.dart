@@ -1,8 +1,9 @@
 import '../models/Instrucao.dart';
 import '../models/Ingrediente.dart';
+import 'package:uuid/uuid.dart';
 
 class Receita {
-  final int? id;
+  final String? id;
   final String? nome;
   final DateTime? dataCriacao;
   final List<Ingrediente> ingredientes;
@@ -10,12 +11,13 @@ class Receita {
 
 
 Receita ({
-  this.id,
+  String? id,
   required this.nome,
-  required this.dataCriacao,
+  String? dataCriacao,
   required this.ingredientes,
   required this.instrucoes
-  }) : dataCriacao =  dataCriacao ?? DateTime.now();
+  }) : id = id ?? const Uuid().v4(),
+       dataCriacao =  dataCriacao ?? DateTime.now().toIso8601String();
 
   Map<String, dynamic> toMap() {
     return {
