@@ -2,8 +2,8 @@ import 'package:uuid/uuid.dart';
 
 
 class Ingrediente {
-  final String? id;
-  final String? receitaId;
+  String? id;
+  String? receitaId;
   String? nome;
   String? quantidade;
 

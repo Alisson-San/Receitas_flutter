@@ -1,19 +1,15 @@
-import 'dart:ffi';
-
-import 'package:uuid/uuid.dart';
-
 class Instrucao {
-  final String? id;
-  final String? receitaId;
-  final Int? passo;
+  String? id;
+  String? receitaId;
+  final int? passo;
   final String? descricao;
 
   Instrucao({
-    String? id,
+    this.id,
     this.receitaId,
     this.passo,
     this.descricao,
-  }) : id = id ?? const Uuid().v4();
+  });
 
   Map<String, dynamic> toMap() {
     return {

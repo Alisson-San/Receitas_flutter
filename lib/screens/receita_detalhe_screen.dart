@@ -5,12 +5,16 @@ import 'package:receitas/models/Instrucao.dart';
 import 'package:receitas/repositories/ingredientes_repository.dart';
 import 'package:receitas/repositories/instrucoes_repository.dart';
 import 'package:receitas/repositories/receita_repository.dart';
+import 'package:uuid/uuid.dart';
 
 
 class ReceitaDetalheScreen extends StatefulWidget {
   final Receita receita;
+  final ReceitaRepository repositoryReceita;
+  final IngredientesRepository repositoryIngredientes;
+  final InstrucoesRepository repositoryInstrucoes;
 
-  const ReceitaDetalheScreen({super.key, required this.receita});
+  const ReceitaDetalheScreen({super.key, required this.receita, required this.repositoryReceita, required this.repositoryIngredientes, required this.repositoryInstrucoes});
 
   @override
   _ReceitaDetalheScreenState createState() => _ReceitaDetalheScreenState();
@@ -26,10 +30,9 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
   void initState() {
     super.initState();
     _receitaAtualizada = widget.receita;
-    _ingredientesRepository = IngredientesRepository();
-    _instrucoesRepository = InstrucoesRepository();
-    _receitaRepository = ReceitaRepository();
-    _carregarDados();
+    _ingredientesRepository = widget.repositoryIngredientes;
+    _instrucoesRepository = widget.repositoryInstrucoes;
+    _receitaRepository = widget.repositoryReceita;
   }
 
   Future<void> _carregarDados() async {
@@ -37,8 +40,8 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
     final instrucoes = await _instrucoesRepository.todosDaReceita(_receitaAtualizada.id!);
     
     setState(() {
-      _receitaAtualizada.ingredientes.addAll(ingredientes);
-      _receitaAtualizada.instrucoes.addAll(instrucoes);
+      _receitaAtualizada.ingredientes = ingredientes;
+      _receitaAtualizada.instrucoes = instrucoes;
     });
   }
 
@@ -186,6 +189,7 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
 
     if (result == true) {
       final novaInstrucao = Instrucao(
+        id: Uuid().v1(),
         receitaId: _receitaAtualizada.id,
         descricao: descricaoController.text,
         passo: _receitaAtualizada.instrucoes.length + 1,
@@ -283,6 +287,12 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
   }
 }
 
+  void _removerReceita() async {
+    await _receitaRepository.remover(_receitaAtualizada.id!);
+    _carregarDados();
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -296,8 +306,8 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () {
-              // Adicionar lógica para remover a receita
-              Navigator.pop(context, true); // Retorna true para indicar que a receita foi removida
+              _removerReceita();
+              Navigator.pop(context);
             },
           ),
         ],

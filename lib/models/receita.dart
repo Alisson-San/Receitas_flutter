@@ -1,9 +1,8 @@
 import '../models/Instrucao.dart';
 import '../models/Ingrediente.dart';
-import 'package:uuid/uuid.dart';
 
 class Receita {
-  final String? id;
+  String? id;
   String? nome;
   final String? dataCriacao;
   List<Ingrediente> ingredientes;

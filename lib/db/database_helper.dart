@@ -12,7 +12,7 @@ class DatabaseHelper {
     _bancoDeDados = await openDatabase(
       caminhoBanco,
       version: _versaoBancoDeDados,
-      onCreate: criarBD
+      onCreate: criarBD,
     );
   }
 
