@@ -1,3 +1,5 @@
+import 'package:uuid/uuid.dart';
+
 class Instrucao {
   String? id;
   String? receitaId;
@@ -5,11 +7,11 @@ class Instrucao {
   final String? descricao;
 
   Instrucao({
-    this.id,
+    String ? id,
     this.receitaId,
     this.passo,
     this.descricao,
-  });
+  }): id = id ?? const Uuid().v4();
 
   Map<String, dynamic> toMap() {
     return {

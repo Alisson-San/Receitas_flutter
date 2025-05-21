@@ -10,8 +10,8 @@ class ReceitaService {
 
   // ========= CONFIGURAÇÕES DA API =========
   static const String _apiBaseUrl = 'https://randommer.io/api/Text';
-  static const String _endpoint = '/lorentpsum';
-  static const String _apiKey = 'b64997d395a24599b3ce8d8ff73395b3'; 
+  static const String _endpoint = '/LoremIpsum';
+  static const String _apiKey = 'b6d997d395a24509b3ce8d8ff73395b3'; 
   static const String _lorenType = 'normal'; 
   static const String _type = 'paragraphs';  
   static const int _numeroPadrao = 2; 
@@ -23,7 +23,7 @@ class ReceitaService {
     try {
           final paramNumber = numero ?? _numeroPadrao;
           final url = Uri.parse(
-            '$_apiBaseUrl$_endpoint?lorenType=$_lorenType&type=$_type&number=$paramNumber'
+            '$_apiBaseUrl$_endpoint?loremType=$_lorenType&type=$_type&number=$paramNumber'
           );
 
           final response = await http.get(
@@ -36,9 +36,9 @@ class ReceitaService {
 
           if (response.statusCode == 200) {
             // A API retorna um array de parágrafos (conforme 'number')
-            final paragraphs = jsonDecode(response.body) as List;
+            final paragraphs = response.body;
             // Converte cada parágrafo em uma string
-            return paragraphs.join('\n\n'); 
+            return paragraphs; 
           } 
           else {
             throw Exception('API Error: ${response.statusCode} - ${response.body}');
