@@ -55,21 +55,21 @@ class ReceitaService {
 
     // Pega a primeira palavra como título
     final title = words[0];
-    final _random = Random();
+    final random = Random();
     
     // Pega algumas palavras para ingredientes (número aleatório entre 3 e 7)
-    final ingredientCount = 3 + _random.nextInt(5);
+    final ingredientCount = 3 + random.nextInt(5);
     final ingredients = words.sublist(1, 1 + ingredientCount).map((word) => 
       Ingrediente(
         receitaId: '', 
         nome: word,
-        quantidade: '${1 + _random.nextInt(10)} ${['kg', 'g', 'ml'][_random.nextInt(3)]}',
+        quantidade: '${1 + random.nextInt(10)} ${['kg', 'g', 'ml'][random.nextInt(3)]}',
       )
     ).toList();
 
     // Pega o restante para instruções (dividido em frases)
     final remainingWords = words.sublist(1 + ingredientCount);
-    final instructionCount = 2 + _random.nextInt(3); // Número aleatório entre 2 e 5
+    final instructionCount = 2 + random.nextInt(3); // Número aleatório entre 2 e 5
     final instructions = <Instrucao>[];
     
     if (remainingWords.isNotEmpty) {
