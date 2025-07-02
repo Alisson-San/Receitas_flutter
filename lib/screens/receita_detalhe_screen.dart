@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:receitas/managers/gestor_receita.dart';
 import 'package:receitas/models/receita.dart';
-import 'package:receitas/models/Ingrediente.dart';
-import 'package:receitas/models/Instrucao.dart';
 import 'package:receitas/repositories/ingredientes_repository.dart';
 import 'package:receitas/repositories/instrucoes_repository.dart';
-import 'package:receitas/repositories/receita_repository.dart';
-import 'package:uuid/uuid.dart';
-
+import 'package:receitas/managers/gestor_ingrediente.dart';
+import 'package:receitas/managers/gestor_instrucao.dart';
 
 class ReceitaDetalheScreen extends StatefulWidget {
   final Receita receita;
-  final ReceitaRepository repositoryReceita;
-  final IngredientesRepository repositoryIngredientes;
-  final InstrucoesRepository repositoryInstrucoes;
+  final GestorReceita gestorReceita;
+  final IngredientesRepository ingredientesRepository;
+  final InstrucoesRepository instrucoesRepository;
 
-  const ReceitaDetalheScreen({super.key, required this.receita, required this.repositoryReceita, required this.repositoryIngredientes, required this.repositoryInstrucoes});
+  const ReceitaDetalheScreen({
+    super.key,
+    required this.receita,
+    required this.gestorReceita,
+    required this.ingredientesRepository,
+    required this.instrucoesRepository,
+  });
 
   @override
   _ReceitaDetalheScreenState createState() => _ReceitaDetalheScreenState();
@@ -24,15 +28,33 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
   late Receita _receitaAtualizada;
   late IngredientesRepository _ingredientesRepository;
   late InstrucoesRepository _instrucoesRepository;
-  late ReceitaRepository _receitaRepository;
+  late GestorReceita _gestorReceita; 
+
+  late GestorIngrediente _gestorIngrediente;
+  late GestorInstrucao _gestorInstrucao;
 
   @override
   void initState() {
     super.initState();
     _receitaAtualizada = widget.receita;
-    _ingredientesRepository = widget.repositoryIngredientes;
-    _instrucoesRepository = widget.repositoryInstrucoes;
-    _receitaRepository = widget.repositoryReceita;
+    _ingredientesRepository = widget.ingredientesRepository;
+    _instrucoesRepository = widget.instrucoesRepository;
+    _gestorReceita = widget.gestorReceita;
+
+    _gestorIngrediente = GestorIngrediente(
+      ingredientesRepository: _ingredientesRepository,
+      receitaId: _receitaAtualizada.id!,
+      onDataChanged: _carregarDados,
+    );
+
+    _gestorInstrucao = GestorInstrucao(
+      instrucoesRepository: _instrucoesRepository,
+      receitaId: _receitaAtualizada.id!,
+      onDataChanged: _carregarDados,
+      currentInstructions: _receitaAtualizada.instrucoes,
+    );
+
+    _carregarDados(); // Carrega os dados iniciais
   }
 
   Future<void> _carregarDados() async {
@@ -45,254 +67,6 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
     });
   }
 
-  void _adicionarIngrediente() async {
-    final nomeController = TextEditingController();
-    final quantidadeController = TextEditingController();
-    
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Adicionar Ingrediente'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nomeController,
-              autofocus: true,
-              decoration: const InputDecoration(labelText: 'Nome do Ingrediente'),
-            ),
-            TextField(
-              controller: quantidadeController,
-              decoration: const InputDecoration(labelText: 'Quantidade'),
-              keyboardType: TextInputType.number,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (nomeController.text.isNotEmpty && quantidadeController.text.isNotEmpty) {
-                Navigator.pop(context, true);
-              }
-            },
-            child: const Text('Adicionar'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == true) {
-      final novoIngrediente = Ingrediente(
-        receitaId: _receitaAtualizada.id,
-        nome: nomeController.text,
-        quantidade: quantidadeController.text,
-      );
-      
-      await _ingredientesRepository.adicionar(novoIngrediente);
-      _carregarDados();
-    }
-  }
-
-  void _editarIngrediente(int index) async {
-    final ingrediente = _receitaAtualizada.ingredientes[index];
-    final nomeController = TextEditingController(text: ingrediente.nome);
-    final quantidadeController = TextEditingController(text: ingrediente.quantidade?.toString() ?? '');
-    
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Editar Ingrediente'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nomeController,
-              autofocus: true,
-              decoration: const InputDecoration(labelText: 'Nome do Ingrediente'),
-            ),
-            TextField(
-              controller: quantidadeController,
-              decoration: const InputDecoration(labelText: 'Quantidade'),
-              keyboardType: TextInputType.number,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (nomeController.text.isNotEmpty && quantidadeController.text.isNotEmpty) {
-                Navigator.pop(context, true);
-              }
-            },
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == true) {
-      final ingredienteAtualizado = Ingrediente(
-        id: ingrediente.id,
-        receitaId: ingrediente.receitaId,
-        nome: nomeController.text,
-        quantidade: quantidadeController.text,
-      );
-      
-      await _ingredientesRepository.atualizar(ingredienteAtualizado);
-      _carregarDados();
-    }
-  }
-
-  void _removerIngrediente(int index) async {
-    final ingrediente = _receitaAtualizada.ingredientes[index];
-    await _ingredientesRepository.remover(ingrediente.id!);
-    _carregarDados();
-  }
-
-  void _adicionarInstrucao() async {
-    final descricaoController = TextEditingController();
-    
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Adicionar Instrução'),
-        content: TextField(
-          controller: descricaoController,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Descrição da Instrução'),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (descricaoController.text.isNotEmpty) {
-                Navigator.pop(context, true);
-              }
-            },
-            child: const Text('Adicionar'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == true) {
-      final novaInstrucao = Instrucao(
-        id: Uuid().v1(),
-        receitaId: _receitaAtualizada.id,
-        descricao: descricaoController.text,
-        passo: _receitaAtualizada.instrucoes.length + 1,
-      );
-      
-      await _instrucoesRepository.adicionar(novaInstrucao);
-      _carregarDados();
-    }
-  }
-
-  void _editarInstrucao(int index) async {
-    final instrucao = _receitaAtualizada.instrucoes[index];
-    final descricaoController = TextEditingController(text: instrucao.descricao);
-    
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Editar Instrução'),
-        content: TextField(
-          controller: descricaoController,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Descrição da Instrução'),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (descricaoController.text.isNotEmpty) {
-                Navigator.pop(context, true);
-              }
-            },
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == true) {
-      final instrucaoAtualizada = Instrucao(
-        id: instrucao.id,
-        receitaId: instrucao.receitaId,
-        descricao: descricaoController.text,
-        passo: instrucao.passo,
-      );
-      
-      await _instrucoesRepository.atualizar(instrucaoAtualizada);
-      _carregarDados();
-    }
-  }
-
-  void _removerInstrucao(int index) async {
-    final instrucao = _receitaAtualizada.instrucoes[index];
-    await _instrucoesRepository.remover(instrucao.id!);
-    _carregarDados();
-  }
-
-  void _editarReceita() async {
-  final nomeController = TextEditingController(text: _receitaAtualizada.nome);
-  
-  final result = await showDialog<bool>(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('Editar Receita'),
-      content: TextField(
-        controller: nomeController,
-        autofocus: true,
-        decoration: const InputDecoration(labelText: 'Nome da Receita'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, false),
-          child: const Text('Cancelar'),
-        ),
-        TextButton(
-          onPressed: () {
-            if (nomeController.text.isNotEmpty) {
-              Navigator.pop(context, true);
-            }
-          },
-          child: const Text('Salvar'),
-        ),
-      ],
-    ),
-  );
-
-  if (result == true) {
-    setState(() {
-      _receitaAtualizada.nome = nomeController.text;
-    });
-    await _receitaRepository.atualizar(_receitaAtualizada);
-  }
-}
-
-  void _removerReceita() async {
-    await _receitaRepository.remover(_receitaAtualizada.id!);
-    _carregarDados();
-  }
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -301,13 +75,18 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
-            onPressed: _editarReceita,
+            onPressed: () async {
+              await _gestorReceita.editarReceita(context, _receitaAtualizada);
+              setState(() {}); 
+            },
           ),
           IconButton(
             icon: const Icon(Icons.delete),
-            onPressed: () {
-              _removerReceita();
-              Navigator.pop(context);
+            onPressed: () async {
+              await _gestorReceita.removerReceita(context,_receitaAtualizada.id!);
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
             },
           ),
         ],
@@ -341,13 +120,13 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
             // Seção 2: Ingredientes
             Row(
               children: [
-                Text(
+                const Text(
                   'Ingredientes',
                 ),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.add),
-                  onPressed: _adicionarIngrediente,
+                  onPressed: () => _gestorIngrediente.addIngrediente(context),
                 ),
               ],
             ),
@@ -364,11 +143,11 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.edit, size: 20),
-                        onPressed: () => _editarIngrediente(index),
+                        onPressed: () => _gestorIngrediente.editarIngrediente(context, ingrediente),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, size: 20),
-                        onPressed: () => _removerIngrediente(index),
+                        onPressed: () => _gestorIngrediente.removerIngrediente(ingrediente),
                       ),
                     ],
                   ),
@@ -381,13 +160,13 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
             // Seção 3: Modo de Preparo
             Row(
               children: [
-                Text(
+                const Text(
                   'Modo de Preparo'
                 ),
                 const Spacer(),
                 IconButton(
                   icon: const Icon(Icons.add),
-                  onPressed: _adicionarInstrucao,
+                  onPressed: () => _gestorInstrucao.addInstrucao(context),
                 ),
               ],
             ),
@@ -408,11 +187,11 @@ class _ReceitaDetalheScreenState extends State<ReceitaDetalheScreen> {
                     children: [
                       IconButton(
                         icon: const Icon(Icons.edit, size: 20),
-                        onPressed: () => _editarInstrucao(index),
+                        onPressed: () => _gestorInstrucao.editarInstrucao(context, instrucao),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, size: 20),
-                        onPressed: () => _removerInstrucao(index),
+                        onPressed: () => _gestorInstrucao.removerInstrucao(instrucao),
                       ),
                     ],
                   ),

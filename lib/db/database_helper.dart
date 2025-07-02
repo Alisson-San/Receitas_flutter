@@ -3,29 +3,50 @@ import 'package:path/path.dart';
 
 class DatabaseHelper {
   static final String _nomeBancoDeDados = "receitas.db";
-  static final int _versaoBancoDeDados = 1;
-  static late Database _bancoDeDados;
+  static final int _versaoBancoDeDados = 2;
 
 
-  inicializar() async {
+  static Database? _bancoDeDados; 
+
+
+  DatabaseHelper._privateConstructor();
+  static final DatabaseHelper _instance = DatabaseHelper._privateConstructor();
+
+  factory DatabaseHelper() {
+    return _instance;
+  }
+
+  Future<Database> get database async {
+    if (_bancoDeDados != null) {
+      return _bancoDeDados!; // Já inicializado, retorna
+    }
+    _bancoDeDados = await _initDatabase(); 
+    return _bancoDeDados!;
+  }
+
+  
+  Future<Database> _initDatabase() async {
     String caminhoBanco = join(await getDatabasesPath(), _nomeBancoDeDados);
-    _bancoDeDados = await openDatabase(
+    return await openDatabase(
       caminhoBanco,
       version: _versaoBancoDeDados,
-      onCreate: criarBD,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
     );
   }
 
-  Future criarBD(Database db, int version) async {
-  await db.execute('''
+  
+  Future<void> _onCreate(Database db, int version) async {
+    await db.execute('''
       CREATE TABLE receitas (
         id TEXT PRIMARY KEY,
         nome TEXT NOT NULL,
-        dataCriacao TEXT NOT NULL
+        dataCriacao TEXT NOT NULL,
+        userId TEXT NOT NULL
       )
     ''');
 
-  await db.execute('''
+    await db.execute('''
     CREATE TABLE ingredientes (
       id TEXT PRIMARY KEY NOT NULL,
       receitaId TEXT NOT NULL,
@@ -35,7 +56,7 @@ class DatabaseHelper {
     )
   ''');
 
-  await db.execute('''
+    await db.execute('''
     CREATE TABLE instrucoes (
       id TEXT PRIMARY KEY NOT NULL,
       receitaId TEXT NOT NULL,
@@ -46,22 +67,34 @@ class DatabaseHelper {
   ''');
   }
 
+  
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion != newVersion) {
+      await db.execute('DROP TABLE IF EXISTS receitas');
+      await db.execute('DROP TABLE IF EXISTS ingredientes');
+      await db.execute('DROP TABLE IF EXISTS instrucoes');
+      await _onCreate(db, newVersion); // Recria as tabelas
+    }
+      
+     
+  }
+
+  
   Future<int> inserir(String tabela, Map<String, Object?> valores) async {
-    await inicializar();
-    return await _bancoDeDados.insert(tabela, valores);
+    final db = await database;
+    return await db.insert(tabela, valores);
   }
 
   Future<List<Map<String, Object?>>> obterTodos(String tabela,
       {String? condicao, List<Object>? conidcaoArgs}) async {
-    await inicializar();
-    return await _bancoDeDados.query(tabela,
+    final db = await database;
+    return await db.query(tabela,
         where: condicao, whereArgs: conidcaoArgs);
   }
 
-
   Future<int> atualizar(String tabela, Map<String, Object?> valores) async {
-    await inicializar();
-    return await _bancoDeDados.update(
+    final db = await database;
+    return await db.update(
       tabela,
       valores,
       where: 'id = ?',
@@ -69,9 +102,9 @@ class DatabaseHelper {
     );
   }
 
-  Future<int> deletar(String tabela , Map<String, Object?> valores) async {
-    await inicializar();
-    return await _bancoDeDados.delete(
+  Future<int> deletar(String tabela, Map<String, Object?> valores) async {
+    final db = await database;
+    return await db.delete(
       tabela,
       where: 'id = ?',
       whereArgs: [valores['id']],

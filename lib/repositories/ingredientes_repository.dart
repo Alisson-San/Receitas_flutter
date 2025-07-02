@@ -32,4 +32,14 @@ class IngredientesRepository {
     return listaDeIngredientes;
   }
 
+  Future<void> removerTodosDaReceita(String receitaId) async {
+      final db = await _db.database;
+      await db.delete(
+        'ingredientes',
+        where: 'receitaId = ?',
+        whereArgs: [receitaId],
+      );
+    }
+
+
 }

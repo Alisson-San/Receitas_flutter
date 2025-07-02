@@ -1,32 +1,57 @@
-import '/db/database_helper.dart';
-import '/models/receita.dart';
+import 'package:receitas/db/database_helper.dart';
+import 'package:receitas/models/receita.dart';
+import 'package:sqflite/sqflite.dart';
 
 class ReceitaRepository {
+  final DatabaseHelper _databaseHelper = DatabaseHelper();
 
-  static final DatabaseHelper _db = DatabaseHelper();
-
-  static const String _tabela = "receitas";
-
-  Future<int> adicionar(Receita receita) async {
-    return _db.inserir(_tabela, receita.toMap());
+  Future<void> adicionar(Receita receita) async {
+    final db = await _databaseHelper.database;
+    await db.insert(
+      'receitas',
+      receita.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
-  Future<int> atualizar(Receita receita) async {
-    return _db.atualizar(_tabela, receita.toMap());
+  Future<void> atualizar(Receita receita) async {
+    final db = await _databaseHelper.database;
+    await db.update(
+      'receitas',
+      receita.toMap(),
+      where: 'id = ?',
+      whereArgs: [receita.id],
+    );
   }
 
-  Future<int> remover(String id) async {
-    return _db.deletar(_tabela, {'id': id});
-  }
-  Future<List<Receita>> todos() async {
-    var receitasNoBanco = await _db.obterTodos(_tabela);
-    List<Receita> listaDeReceitas = [];
-
-    for (var i = 0; i < receitasNoBanco.length; i++) {
-      listaDeReceitas.add(Receita.fromMap(receitasNoBanco[i]));
-    }
-
-    return listaDeReceitas;
+  Future<void> remover(String id) async {
+    final db = await _databaseHelper.database;
+    await db.delete(
+      'receitas',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
+  
+  Future<List<Receita>> todosDoUsuario(String userId) async {
+    final db = await _databaseHelper.database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'receitas',
+      where: 'userId = ?', // Filtra pelo userId
+      whereArgs: [userId],
+    );
+    return List.generate(maps.length, (i) {
+      return Receita.fromMap(maps[i]);
+    });
+  }
+
+  Future<void> removerTodosDoUsuario(String userId) async {
+    final db = await _db.database;
+    await db.delete(
+      'receitas',
+      where: 'userId = ?',
+      whereArgs: [userId],
+    );
+  }
 }

@@ -26,6 +26,8 @@ migrate_working_dir/
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
+/ios/firebase_app_id_file.json
+/ios/Runner/GoogleServices-Info.plist
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
@@ -43,3 +45,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/app/google-services.json
+
+lib/firebase_options.dart
+firebase.json

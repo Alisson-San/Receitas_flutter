@@ -90,6 +90,7 @@ class ReceitaService {
     return Receita(
       id: '',
       nome: title,
+      userId: '',
       dataCriacao: DateTime.now().toIso8601String().split('T')[0],
       ingredientes: ingredients,
       instrucoes: instructions,
@@ -100,6 +101,7 @@ class ReceitaService {
     return Receita(
       id: '',
       nome: 'Receita Padrão',
+      userId: '', 
       dataCriacao: DateTime.now().toIso8601String().split('T')[0],
       ingredientes: [
         Ingrediente(receitaId: '', nome: 'Ingrediente 1', quantidade: '1'),

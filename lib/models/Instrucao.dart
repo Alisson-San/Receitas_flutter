@@ -1,5 +1,9 @@
 import 'package:uuid/uuid.dart';
+import 'package:json_annotation/json_annotation.dart';
 
+part 'Instrucao.g.dart';
+
+@JsonSerializable()
 class Instrucao {
   String? id;
   String? receitaId;
@@ -12,6 +16,9 @@ class Instrucao {
     this.passo,
     this.descricao,
   }): id = id ?? const Uuid().v4();
+
+  factory Instrucao.fromJson(Map<String, dynamic> json) => _$InstrucaoFromJson(json);
+  Map<String, dynamic> toJson() => _$InstrucaoToJson(this);
 
   Map<String, dynamic> toMap() {
     return {
