@@ -28,7 +28,7 @@ void main() async {
 
   // Inicialização do plugin de notificações
   const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+      AndroidInitializationSettings('app_icon');
 
   final InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid
@@ -36,11 +36,11 @@ void main() async {
   await flutterLocalNotificationsPlugin.initialize(
     initializationSettings,
     onDidReceiveNotificationResponse: (NotificationResponse notificationResponse) async {
-
+      // Lidar com a resposta da notificação (clique)
     },
   );
 
-
+  // Inicialize o NotificationService APÓS o flutterLocalNotificationsPlugin
   notificationService = ServicoNotificacao(
       flutterLocalNotificationsPlugin: flutterLocalNotificationsPlugin);
 
